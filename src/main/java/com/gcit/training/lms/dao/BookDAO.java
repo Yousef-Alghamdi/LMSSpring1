@@ -8,10 +8,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 
-import com.gcit.training.lms.entity.Author;
 import com.gcit.training.lms.entity.Book;
+import com.gcit.training.lms.entity.Publisher;
 
 public class BookDAO extends AbstractDAO implements
 		ResultSetExtractor<List<Book>> {
@@ -23,10 +22,10 @@ public class BookDAO extends AbstractDAO implements
 	PublisherDAO pdao;
 
 	public void create(Book b) throws SQLException {
-		template.update("insert into tbl_book (title, pubId) values (?, ?)",
-				new Object[] { b.getTitle(), b.getPublisher().getPublisherId()});
-	
-		
+		template.update(
+				"insert into tbl_book (title, pubId) values (?, ?)",
+				new Object[] { b.getTitle(), b.getPublisher().getPublisherId() });
+
 		template.update(
 				"insert into tbl_book (title, pubId) values (?,?)",
 				new Object[] { b.getTitle(), b.getPublisher().getPublisherId() });
@@ -57,7 +56,7 @@ public class BookDAO extends AbstractDAO implements
 	public List<Book> readAll(int pageNo, int pageSize) throws SQLException {
 		setPageNo(pageNo);
 		return (List<Book>) template.query("select * from tbl_book  LIMIT ?,?",
-				new Object[] { (pageNo-1)*pageSize, pageSize }, this);
+				new Object[] { (pageNo - 1) * pageSize, pageSize }, this);
 	}
 
 	public Integer getCount() throws SQLException {
@@ -71,7 +70,16 @@ public class BookDAO extends AbstractDAO implements
 		String qString = "%" + searchString + "%";
 		return (List<Book>) template.query(
 				"select * from tbl_book where (title) like ?  LIMIT ?,?",
-				new Object[] {qString, (pageNo-1)*pageSize, pageSize }, this);
+				new Object[] { qString, (pageNo - 1) * pageSize, pageSize },
+				this);
+	}
+
+	public List<Book> readAllGenre(String searchString, int pageNo, int pageSize)
+			throws SQLException {
+		return (List<Book>) template
+				.query("SELECT * FROM library.tbl_book b, library.tbl_book_genres g where g.genre_id = ? AND b.bookId=g.bookId  LIMIT ?,?",
+						new Object[] { Integer.parseInt(searchString),
+								(pageNo - 1) * pageSize, pageSize }, this);
 	}
 
 	@Override
@@ -79,9 +87,11 @@ public class BookDAO extends AbstractDAO implements
 		List<Book> bList = new ArrayList<Book>();
 		while (rs.next()) {
 			Book b = new Book();
-			b.setBookId(rs.getInt("bookId"));
-			b.setTitle(rs.getString("title"));
-			b.setPublisher(pdao.readOne((rs.getInt("pubId"))));
+			b.setBookId(rs.getInt(1));
+			b.setTitle(rs.getString(2));
+			Publisher p = pdao.readOne((Integer.parseInt(rs.getString(3))));
+			b.setPublisher(p);
+
 			bList.add(b);
 		}
 

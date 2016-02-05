@@ -22,7 +22,7 @@
 
 
 <div class="page-header">
-	<h1>List of Books in in ${genreName }LMS Application</h1>
+	<h1>List of "${genreName}" Books in LMS Application</h1>
 	
 </div>
 <form action="searchBook" method="get">

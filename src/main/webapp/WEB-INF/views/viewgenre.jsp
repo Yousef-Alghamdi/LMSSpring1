@@ -17,7 +17,7 @@
 <div class="alert alert-success" role="alert" id="#SuccessEdit" style="display:none;">
   <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
   <span class="sr-only">Error:</span>
-  Branch Successfully Updated.
+  Genre Successfully Updated.
 </div>
 
 
@@ -25,7 +25,7 @@
 	<h1>List of Genres in LMS Application</h1>
 	
 </div>
-<form action="searchBranch" method="get">
+<form action="searchgenre" method="get">
 <div class="input-group">
   <span class="input-group-addon" id="basic-addon1">Search</span>
   <input type="text" class="form-control" value='${searchResult}' placeholder="Genre Name" aria-describedby="basic-addon1" name="searchString" >

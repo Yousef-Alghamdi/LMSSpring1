@@ -5,5 +5,5 @@
 
 		Book Title: <input type="text" name="bookTitle"> 
 		Publisher: <input type="text" name="publisher"> 
-		<button type="submit" class="btn btn-sm btn-primary">Add Author</button>
+		<button type="submit" class="btn btn-sm btn-primary">Add Book</button>
 	</form>

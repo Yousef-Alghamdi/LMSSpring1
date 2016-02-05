@@ -4,15 +4,12 @@
 <%@ page import="com.gcit.training.lms.dao.AuthorDAO"%>
 <%@ page import="java.util.List"%>
 
-<%
-	AdministrativeService adminService = new AdministrativeService();
-%>
 <div class="modal-content">
 	<form id="modal_form">
 		<input type=hidden name="genreId" value=${genreId } />
-		<h2>Edit Genre details below:</h2>
+		<h2>Edit genre details below:</h2>
 		Genre Name: <input type="text" name="genreName"
-			value='${genre_name}'>
+			value='${genreName}'>
 		<button type="submit" class="btn btn-sm btn-primary">Apply
 			Change</button>
 	</form>
@@ -24,7 +21,7 @@
 			$('#modal_form').on('submit', function(e) {
 				e.preventDefault();
 				$.ajax({
-					url : "editGenre", //this is the submit URL
+					url : "editgenre", //this is the submit URL
 					type : 'POST', //or POST
 					data : $('#modal_form').serialize(),
 					success : function(data) {
@@ -34,7 +31,7 @@
 							$('#SuccessEdit').delay(5000).fadeOut('slow');
 						} else {
 							$("#ErrorEdit").show();
-							alert("There was a problem updating author.");
+							alert("There was a problem updating genre.");
 							$('#ErrorEdit').delay(5000).fadeOut('slow');
 						}
 						$("#myModal1").modal("toggle");

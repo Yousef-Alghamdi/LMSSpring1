@@ -59,6 +59,11 @@ public class HomeController {
 	/**
 	 * Simply selects the home view to render by returning its name.
 	 */
+	@RequestMapping(value = "/about", method = RequestMethod.GET)
+	public String about(Locale locale, Model model) throws SQLException {
+		return "about";
+	}
+
 	@RequestMapping(value = "/admin", method = RequestMethod.GET)
 	public String admin() {
 		return "admin";
@@ -195,11 +200,11 @@ public class HomeController {
 
 		try {
 			adminService.addAuthor(authorName);
-			model.addAttribute("status", "success");
+			model.addAttribute("status", "Author was added successfully");
 		} catch (Exception E) {
-			model.addAttribute("status", "Error");
+			model.addAttribute("status", "Error adding new author");
 		}
-		return "status";
+		return "/admin";
 	}
 
 	@RequestMapping(value = "/deleteAuthor", method = RequestMethod.GET)
@@ -344,11 +349,12 @@ public class HomeController {
 
 		try {
 			adminService.addBook(bookTitle, p);
-			model.addAttribute("status", "success");
+			model.addAttribute("status", "Book was added successfully");
 		} catch (Exception E) {
-			model.addAttribute("status", "Error");
+			model.addAttribute("status", "Error adding new book");
 		}
-		return "status";
+
+		return "/admin";
 	}
 
 	@RequestMapping(value = "/deleteBook", method = RequestMethod.GET)
@@ -493,11 +499,11 @@ public class HomeController {
 
 		try {
 			adminService.addBranch(BranchName, BranchAddress);
-			model.addAttribute("status", "success");
+			model.addAttribute("status", "Branch was added successfully");
 		} catch (Exception E) {
-			model.addAttribute("status", "Error");
+			model.addAttribute("status", "Error adding new branch");
 		}
-		return "status";
+		return "/admin";
 	}
 
 	@RequestMapping(value = "/deleteBranch", method = RequestMethod.GET)
@@ -646,11 +652,11 @@ public class HomeController {
 
 		try {
 			adminService.addBorrower(borName, borAddress, borPhone);
-			model.addAttribute("status", "success");
+			model.addAttribute("status", "borroewer was added successfully");
 		} catch (Exception E) {
-			model.addAttribute("status", "Error");
+			model.addAttribute("status", "Error adding new borrower");
 		}
-		return "status";
+		return "/librarian";
 	}
 
 	@RequestMapping(value = "/deleteBorrower", method = RequestMethod.GET)
@@ -772,12 +778,12 @@ public class HomeController {
 	 * Genre Mapping
 	 */
 
-	@RequestMapping(value = "/viewGenre", method = RequestMethod.GET)
+	@RequestMapping(value = "/viewgenre", method = RequestMethod.GET)
 	public String viewGenre(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
 
 		int count = adminService.getAllGenreCount();
-		String s = adminService.pagination("/training/getGenre", new String(),
+		String s = adminService.pagination("/training/getgenre", new String(),
 				count, 10);
 
 		model.addAttribute("pagination", s);
@@ -786,7 +792,7 @@ public class HomeController {
 
 	}
 
-	@RequestMapping(value = "/getGenre", method = RequestMethod.GET)
+	@RequestMapping(value = "/getgenre", method = RequestMethod.GET)
 	public String getGenreData(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
 
@@ -800,35 +806,40 @@ public class HomeController {
 				searchString);
 
 		StringBuffer sb = new StringBuffer(
-				"<table class='table' id='authorsTable'><thead><tr><th>#</th><th>Author Name</th><th>Edit</th><th>Delete</th></tr></thead><tbody>");
+				"<table class='table' id='genresTable'><thead><tr><th>#</th><th>Genre Name</th><th>Books in this genre</th><th>Edit</th><th>Delete</th></tr></thead><tbody>");
 		for (Genre genre : genres)
 			sb.append("<tr><td>"
 					+ genre.getGenreId()
 					+ "</td><td>"
 					+ genre.getGenreName()
-					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' data-toggle='modal' data-target='#myModal1' href='editgenre?genreId="
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' onclick=\"javascript:location.href='viewBookG?genreId="
+					+ genre.getGenreId()
+					+ "&genreName="
+					+ genre.getGenreName()
+					+ "';\">View Books</button></td><td align='center'><button type='button' class='btn btn btn-primary' data-toggle='modal' data-target='#myModal1' href='editgenre?genreId="
 					+ genre.getGenreId()
 					+ "'>Edit Genre</button></td><td><button type='button' class='btn btn-sm btn-danger' onclick=\"javascript:location.href='deletegenre?genreId="
 					+ genre.getGenreId()
 					+ "';\">Delete Genre</button></td></tr>");
 
 		sb.append("<table>");
+
 		model.addAttribute("result", sb.toString());
 		return "result";
 	}
 
-	@RequestMapping(value = "/searchGenre", method = RequestMethod.GET)
+	@RequestMapping(value = "/searchgenre", method = RequestMethod.GET)
 	public String searchGenre(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
 
 		String searchString = webRequest.getParameter("searchString");
 		int count = adminService.searchGenreCount(searchString);
-		String s = adminService.pagination("/training/getGenre", searchString,
+		String s = adminService.pagination("/training/getgenre", searchString,
 				count, 10);
 
 		model.addAttribute("pagination", s);
 		model.addAttribute("searchResult", searchString);
-		return "viewGenre";
+		return "viewgenre";
 
 	}
 
@@ -874,28 +885,28 @@ public class HomeController {
 
 	}
 
-	@RequestMapping(value = "/addGenre", method = RequestMethod.GET)
+	@RequestMapping(value = "/addgenre", method = RequestMethod.GET)
 	public String addGenre(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
-		return "addGenre";
+		return "addgenre";
 	}
 
-	@RequestMapping(value = "/addGenre", method = RequestMethod.POST)
+	@RequestMapping(value = "/addgenre", method = RequestMethod.POST)
 	public String addGenrePost(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
-		
+
 		String genreName = webRequest.getParameter("genreName");
 
 		try {
 			adminService.addgenre(genreName);
-			model.addAttribute("status", "success");
+			model.addAttribute("status", "Genre was added successfully");
 		} catch (Exception E) {
-			model.addAttribute("status", "Error");
+			model.addAttribute("status", "Error adding new genre");
 		}
-		return "status";
+		return "/admin";
 	}
 
-	@RequestMapping(value = "/deleteGenre", method = RequestMethod.GET)
+	@RequestMapping(value = "/deletegenre", method = RequestMethod.GET)
 	public String DeleteGenre(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
 		int genreId = Integer.parseInt(webRequest.getParameter("genreId"));
@@ -908,7 +919,55 @@ public class HomeController {
 		} catch (Exception E) {
 			model.addAttribute("status", "Error Delete Genre");
 		}
-		return "deleteGenre";
+		return "deletegenre";
+	}
+
+	@RequestMapping(value = "/viewBookG", method = RequestMethod.GET)
+	public String viewBookG(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		int count = adminService.getAllBooksCount();
+		String s = adminService.pagination("/training/getBookG?genreId="
+				+ webRequest.getParameter("genreId"), new String(), count, 10);
+
+		model.addAttribute("pagination", s);
+		model.addAttribute("genreName", webRequest.getParameter("genreName"));
+		model.addAttribute("genreId", webRequest.getParameter("genreId"));
+		return "viewBookG";
+
+	}
+
+	@RequestMapping(value = "/getBookG", method = RequestMethod.GET)
+	public String getBookGData(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		List<Book> books;
+
+		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
+		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
+		String searchString = webRequest.getParameter("genreId");
+if(searchString.isEmpty()){
+	searchString = new String();
+}
+		books = (List<Book>) adminService.getAllGenreBooks(pageNo, pageSize,
+				searchString);
+
+		StringBuffer sb = new StringBuffer(
+				"<table class='table' id='booksTable'><thead><tr><th>#</th><th>Book Title</th><th>Book Publisher</th><th>Action</th></tr></thead><tbody>");
+		for (Book book : books)
+			sb.append("<tr><td>"
+					+ book.getBookId()
+					+ "</td><td>"
+					+ book.getTitle()
+					+ "</td><td>"
+					+ book.getPublisher().getPublisherName()
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' data-toggle='modal' data-target='#myModal1' href='borrowBookb?bookId="
+					+ book.getBookId() + "'>Borrow Book</button></td></tr>");
+
+		sb.append("<table>");
+
+		model.addAttribute("result", sb.toString());
+		return "result";
 	}
 
 	/*

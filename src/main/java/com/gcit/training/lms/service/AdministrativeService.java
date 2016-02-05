@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -43,6 +44,9 @@ public class AdministrativeService {
 
 	@Autowired
 	PublisherDAO publisherDao;
+
+	@Autowired
+	JdbcTemplate template;
 
 	@Transactional
 	/*
@@ -167,18 +171,15 @@ public class AdministrativeService {
 		if (count % pageSize != 0)
 			totalPage++;
 		sb.append("<nav><ul class='pagination'>");
-
+		if(!url.contains("?"))
 		url = url + "?";
 
 		if (StringUtils.hasLength(searchString))
-			url = url + "searchString=" + searchString + "&";
+			url = url + "&searchString=" + searchString + "&";
 
 		for (int i = 1; i <= totalPage; i++)
-			// sb.append("<li><a  href = 'javascript:populate(" + url +
-			// "pageNo=" + i + "&pageSize=" + pageSize + ")'>" + i +
-			// "</a></li>");
 			sb.append("<li><a   class='paginationClass' data-href='" + url
-					+ "pageNo=" + i + "&pageSize=" + pageSize + "' >" + i
+					+ "&pageNo=" + i + "&pageSize=" + pageSize + "' >" + i
 					+ "</a></li>");
 
 		sb.append("</ul></nav>");
@@ -257,7 +258,8 @@ public class AdministrativeService {
 	/*
 	 * Borrower transactions
 	 */
-	public void addBorrower(String borName, String borAddress, String borPhone) throws SQLException {
+	public void addBorrower(String borName, String borAddress, String borPhone)
+			throws SQLException {
 		Borrower bor = new Borrower();
 		bor.setName(borName);
 		bor.setAddress(borAddress);
@@ -290,8 +292,8 @@ public class AdministrativeService {
 	}
 
 	@Transactional
-	public void updateBorrower(Integer borId, String borName, String borAddress, String borPhone)
-			throws SQLException {
+	public void updateBorrower(Integer borId, String borName,
+			String borAddress, String borPhone) throws SQLException {
 		Borrower bor = new Borrower();
 		bor.setName(borName);
 		bor.setAddress(borAddress);
@@ -309,41 +311,36 @@ public class AdministrativeService {
 		return adao.getCount();
 	}
 
-
 	public Borrower getBorrowerById(int borId) throws SQLException {
 		// TODO Auto-generated method stub
 		return bordao.readById(borId);
 	}
-	
+
 	/*
 	 * Genre Transactions
 	 */
-	
-	public int getAllGenreCount() throws SQLException
-	{
+
+	public int getAllGenreCount() throws SQLException {
 		return gdao.getCount();
 	}
 
-	public List<Genre> getAllGenre(int pageNo, int pageSize, String searchString) throws SQLException
-	{
+	public List<Genre> getAllGenre(int pageNo, int pageSize, String searchString)
+			throws SQLException {
 		if (StringUtils.hasLength(searchString))
 			return gdao.readByName(searchString, pageNo, pageSize);
 		else
 			return gdao.readAll(pageNo, pageSize);
 	}
 
-	public int searchGenreCount(String searchString) throws SQLException
-	{
+	public int searchGenreCount(String searchString) throws SQLException {
 		return gdao.getCount();
 	}
 
-	public Genre getGenreById(int genreId) throws SQLException
-	{
+	public Genre getGenreById(int genreId) throws SQLException {
 		return gdao.readOne(genreId);
 	}
 
-	public String addgenre(String genreName) throws SQLException
-	{
+	public String addgenre(String genreName) throws SQLException {
 		Genre g = new Genre();
 		g.setGenreName(genreName);
 
@@ -351,8 +348,8 @@ public class AdministrativeService {
 		return "success";
 	}
 
-	public void updateGenre(Integer genreId, String genreName) throws SQLException
-	{
+	public void updateGenre(Integer genreId, String genreName)
+			throws SQLException {
 
 		Genre a = new Genre();
 		a.setGenreId(genreId);
@@ -361,14 +358,16 @@ public class AdministrativeService {
 
 	}
 
-	public String deleteGenre(int genreId) throws SQLException
-	{
+	public String deleteGenre(int genreId) throws SQLException {
 		Genre a = new Genre();
 		a.setGenreId(genreId);
-		String gName = a.getGenreName();
 
 		gdao.delete(a);
 		return "success";
 	}
-	
+
+	public List<Book> getAllGenreBooks(int pageNo, int pageSize, String searchString)
+			throws SQLException {
+		return bdao.readAllGenre(searchString, pageNo, pageSize);
+	}
 }
