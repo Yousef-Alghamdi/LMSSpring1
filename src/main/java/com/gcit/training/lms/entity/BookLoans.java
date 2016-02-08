@@ -1,37 +1,36 @@
 package com.gcit.training.lms.entity;
 
-import java.sql.Date;
 
 public class BookLoans {
 
-	private Date dateOut;
-	private Date dateIn;
-	private Date dueDate;
+	private String dateOut;
+	private String dateIn;
+	private String dueDate;
 	private Book book;
 	private LibraryBranch libraryBranch;
 	private Borrower borrower;
 
-	public Date getDateOut() {
+	public String getDateOut() {
 		return dateOut;
 	}
 
-	public void setDateOut(Date dateOut) {
+	public void setDateOut(String dateOut) {
 		this.dateOut = dateOut;
 	}
 
-	public Date getDateIn() {
+	public String getDateIn() {
 		return dateIn;
 	}
 
-	public void setDateIn(Date dateIn) {
+	public void setDateIn(String dateIn) {
 		this.dateIn = dateIn;
 	}
 
-	public Date getDueDate() {
+	public String getDueDate() {
 		return dueDate;
 	}
 
-	public void setDueDate(Date dueDate) {
+	public void setDueDate(String dueDate) {
 		this.dueDate = dueDate;
 	}
 

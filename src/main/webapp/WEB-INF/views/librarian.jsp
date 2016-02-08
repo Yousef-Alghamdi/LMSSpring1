@@ -5,6 +5,7 @@
 <div class="page-header">
         <h1>Welcome Librarian</h1>
         <h2>Pick an option</h2>
+        <h3>${status}</h3>
       </div>
       <div class="row">
         <div class="col-sm-4">
@@ -13,7 +14,8 @@
             <li class="list-group-item"><a href="viewgenre"> View Genres</a></li>
             <li class="list-group-item"><a href="addBorrower"> Add Borrower</a></li>
             <li class="list-group-item"><a href="viewBorrower"> View Borrower</a></li>
-            <li class="list-group-item"><a href="test">sql test</a></li>
+            <li class="list-group-item"><a href="viewBookCopies"> View Books Copies</a></li>
+            <li class="list-group-item"><a href="viewBookLoans"> View Loaned Books</a></li>
           </ul>
-        </div><!-- /.col-sm-4 -->
+        </div>
 </div>

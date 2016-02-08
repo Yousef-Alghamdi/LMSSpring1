@@ -82,6 +82,13 @@ public class BorrowerDAO extends AbstractDAO implements
 				Integer.class);
 	}
 
+	public int getSearchCount(String searchString) {
+		searchString = "%" + searchString + "%";
+		return template.queryForObject(
+				"SELECT count(*) from tbl_borrower where name Like ?",
+				new Object[] { searchString }, Integer.class);
+	}
+
 	@Override
 	public List<Borrower> extractData(ResultSet rs) throws SQLException {
 		List<Borrower> borList = new ArrayList<Borrower>();
@@ -97,5 +104,4 @@ public class BorrowerDAO extends AbstractDAO implements
 
 		return borList;
 	}
-
 }

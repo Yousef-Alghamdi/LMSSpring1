@@ -59,8 +59,24 @@ public class BookCopiesDAO extends AbstractDAO implements
 	public List<BookCopies> readAll(int pageNo, int pageSize)
 			throws SQLException {
 		setPageNo(pageNo);
-		return (List<BookCopies>) template.query(
-				"select * from tbl_book_copies", this);
+		return (List<BookCopies>) template
+				.query("Select * "
+						+ "From tbl_library_branch lb, tbl_book b, tbl_book_copies bc"
+						+ " where (lb.branchId) = (bc.branchId) and (bc.bookId) = (b.bookId)"
+						+ " order by (b.title) LIMIT ?,? ", new Object[] {
+						(pageNo - 1) * pageSize, pageSize }, this);
+	}
+
+	public List<BookCopies> readAll(String searchString, int pageSize,
+			int pageNo) {
+		setPageNo(pageNo);
+		String qString = "%" + searchString + "%";
+		return (List<BookCopies>) template
+				.query("Select *"
+						+ " From tbl_library_branch lb, tbl_book b, tbl_book_copies bc"
+						+ " Where (b.title) like ? and (lb.branchId) = (bc.branchId) and (bc.bookId) = (b.bookId)"
+						+ " order by (b.title) LIMIT ?,? ", new Object[] {
+						qString, (pageNo - 1) * pageSize, pageSize }, this);
 	}
 
 	public Integer getCount() throws SQLException {
@@ -82,5 +98,4 @@ public class BookCopiesDAO extends AbstractDAO implements
 
 		return bcList;
 	}
-
 }

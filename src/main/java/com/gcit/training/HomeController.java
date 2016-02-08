@@ -18,6 +18,8 @@ import org.springframework.web.context.request.WebRequest;
 import com.gcit.training.lms.dao.BookDAO;
 import com.gcit.training.lms.entity.Author;
 import com.gcit.training.lms.entity.Book;
+import com.gcit.training.lms.entity.BookCopies;
+import com.gcit.training.lms.entity.BookLoans;
 import com.gcit.training.lms.entity.Borrower;
 import com.gcit.training.lms.entity.Genre;
 import com.gcit.training.lms.entity.LibraryBranch;
@@ -335,6 +337,7 @@ public class HomeController {
 	@RequestMapping(value = "/addBook", method = RequestMethod.GET)
 	public String addBook(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
+		model.addAttribute("publishers", adminService.getAllPublishers());
 		return "addBook";
 	}
 
@@ -429,7 +432,7 @@ public class HomeController {
 			throws SQLException {
 
 		String searchString = webRequest.getParameter("searchString");
-		int count = adminService.searchBooksCount(searchString);
+		int count = adminService.searchBranchesCount(searchString);
 		String s = adminService.pagination("/training/getBranch", searchString,
 				count, 10);
 
@@ -580,7 +583,7 @@ public class HomeController {
 			WebRequest webRequest) throws SQLException {
 
 		String searchString = webRequest.getParameter("searchString");
-		int count = adminService.searchBooksCount(searchString);
+		int count = adminService.searchBorrowersCount(searchString);
 		String s = adminService.pagination("/training/getBorrower",
 				searchString, count, 10);
 
@@ -677,64 +680,227 @@ public class HomeController {
 	}
 
 	/*
-	 * BookBorrowing Mapping
+	 * BookLoans Mapping
 	 */
-	@RequestMapping(value = "/viewBookb", method = RequestMethod.GET)
-	public String viewBookb(Locale locale, Model model, WebRequest webRequest)
-			throws SQLException {
+	@RequestMapping(value = "/viewBookLoans", method = RequestMethod.GET)
+	public String viewBookLoans(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
 
-		int count = adminService.getAllBooksCount();
-		String s = adminService.pagination("/training/getBookb", new String(),
-				count, 10);
+		int count = adminService.getAllLoansCount();
+		String s = adminService.pagination("/training/getBookL?Id=",
+				new String(), count, 10);
 
 		model.addAttribute("pagination", s);
 
-		return "viewBookb";
+		return "viewBookLoans";
 
 	}
 
-	@RequestMapping(value = "/getBookb", method = RequestMethod.GET)
-	public String getBookbData(Locale locale, Model model, WebRequest webRequest)
+	@RequestMapping(value = "/getBookL", method = RequestMethod.GET)
+	public String getBookLData(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
 
-		List<Book> books;
+		List<BookLoans> books;
 
 		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
 		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
 		String searchString = webRequest.getParameter("searchString");
 
-		books = (List<Book>) adminService.getAllBooks(pageNo, pageSize,
+		books = (List<BookLoans>) adminService.getAllBookL(pageNo, pageSize,
 				searchString);
 
 		StringBuffer sb = new StringBuffer(
-				"<table class='table' id='booksTable'><thead><tr><th>#</th><th>Book Title</th><th>Book Publisher</th><th>Action</th></tr></thead><tbody>");
-		for (Book book : books)
+				"<table class='table' id='booksTable'><thead><tr><th>Book Title</th><th>Borrower Name</th><th>Branch</th><th>Date Out</th><th>Date In</th><th>Due Date</th><th>Action</th></tr></thead><tbody>");
+		for (BookLoans book : books)
 			sb.append("<tr><td>"
-					+ book.getBookId()
+					+ book.getBook().getTitle()
 					+ "</td><td>"
-					+ book.getTitle()
+					+ book.getLibraryBranch().getBranchName()
 					+ "</td><td>"
-					+ book.getPublisher().getPublisherName()
-					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' data-toggle='modal' data-target='#myModal1' href='borrowBookb?bookId="
-					+ book.getBookId() + "'>Borrow Book</button></td></tr>");
+					+ book.getBorrower().getName()
+					+ "</td><td>"
+					+ book.getDateOut()
+					+ "</td><td>"
+					+ book.getDateIn()
+					+ "</td><td>"
+					+ book.getDueDate()
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' data-toggle='modal' data-target='#myModal1' href='editBookL?bookId="
+					+ book.getBook().getBookId() + "&branchId="
+					+ book.getLibraryBranch().getBranchId() + "&cardNo="
+					+ book.getBorrower().getCardNo()
+					+ "'>Edit</button></td></tr>");
 
 		sb.append("<table>");
 		model.addAttribute("result", sb.toString());
 		return "result";
 	}
 
-	@RequestMapping(value = "/searchBookb", method = RequestMethod.GET)
-	public String searchBookb(Locale locale, Model model, WebRequest webRequest)
+	@RequestMapping(value = "/searchBookL", method = RequestMethod.GET)
+	public String searchBookL(Locale locale, Model model, WebRequest webRequest)
 			throws SQLException {
 
 		String searchString = webRequest.getParameter("searchString");
-		int count = adminService.searchBooksCount(searchString);
-		String s = adminService.pagination("/training/getBook", searchString,
+		int count = adminService.getAllLoansCount();
+		String s = adminService.pagination("/training/getBookL", searchString,
 				count, 10);
 
 		model.addAttribute("pagination", s);
 		model.addAttribute("searchResult", searchString);
-		return "viewBookb";
+		return "viewBookLoans";
+
+	}
+
+	@RequestMapping(value = "/editBookL", method = RequestMethod.GET)
+	public String editBookL(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		String bookId = webRequest.getParameter("bookId");
+		String cardNo = webRequest.getParameter("cardNo");
+		String branchId = webRequest.getParameter("branchId");
+		if (bookId == null || cardNo == null || branchId == null) {
+			String error = "Please Provide vilid IDs";
+			model.addAttribute("error", error);
+			return "error";
+		}
+
+		BookLoans bl = adminService.getBookLoanByIds(Integer.parseInt(bookId),
+				Integer.parseInt(branchId), Integer.parseInt(cardNo));
+
+		model.addAttribute("dIn", bl.getDateIn());
+		model.addAttribute("dOut", bl.getDateOut());
+		model.addAttribute("dDue", bl.getDueDate());
+
+		model.addAttribute("bookId", bookId);
+		model.addAttribute("cardNo", cardNo);
+		model.addAttribute("branchId", branchId);
+
+		return "editBookL";
+
+	}
+
+	@RequestMapping(value = "/editBookL", method = RequestMethod.POST)
+	public String editBookLPost(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		Integer bookId = Integer.parseInt(webRequest.getParameter("bookId"));
+		Integer cardNo = Integer.parseInt(webRequest.getParameter("cardNo"));
+		Integer branchId = Integer
+				.parseInt(webRequest.getParameter("branchId"));
+		String dIn = webRequest.getParameter("dIn");
+		String dOut = webRequest.getParameter("dOut");
+		String dDue = webRequest.getParameter("dDue");
+
+		Book b = adminService.getBookById(bookId);
+		Borrower bor = adminService.getBorrowerById(cardNo);
+		LibraryBranch lb = adminService.getBranchById(branchId);
+
+		try {
+			adminService.editBookloan(b, bor, lb, dIn, dOut, dDue);
+			model.addAttribute("status", "success");
+		} catch (Exception E) {
+			model.addAttribute("status", "Error");
+		}
+		return "status";
+
+	}
+
+	@RequestMapping(value = "/borrowBookL", method = RequestMethod.GET)
+	public String borrowBookL(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		String bookId = webRequest.getParameter("bookId");
+		if (bookId == null) {
+			String error = "Please Provide book ID";
+			model.addAttribute("error", error);
+			return error;
+		}
+
+		try {
+
+		} catch (Exception E) {
+			String error = "Please Provide Borrower Id2";
+			model.addAttribute("error", error);
+			return error;
+
+		}
+		return "borrowBookb";
+
+	}
+
+	@RequestMapping(value = "/borrowBookL", method = RequestMethod.POST)
+	public String borrowBookLPost(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		try {
+			model.addAttribute("status", "success");
+		} catch (Exception E) {
+			model.addAttribute("status", "Error");
+		}
+		return "status";
+
+	}
+
+	/*
+	 * BookCopies Mapping
+	 */
+	@RequestMapping(value = "/viewBookCopies", method = RequestMethod.GET)
+	public String viewBookCopies(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		int count = adminService.getAllBooksCount();
+		String s = adminService.pagination("/training/getBookCopies",
+				new String(), count, 10);
+
+		model.addAttribute("pagination", s);
+
+		return "viewBookCopies";
+
+	}
+
+	@RequestMapping(value = "/getBookCopies", method = RequestMethod.GET)
+	public String getBookCopiesData(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		List<BookCopies> books;
+
+		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
+		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
+		String searchString = webRequest.getParameter("searchString");
+
+		books = (List<BookCopies>) adminService.getAllBookb(pageNo, pageSize,
+				searchString);
+
+		StringBuffer sb = new StringBuffer(
+				"<table class='table' id='booksTable'><thead><tr><th>#</th><th>Book Title</th><th>Branch</th><th>no. of Copies</th><th>Action</th></tr></thead><tbody>");
+		for (BookCopies book : books)
+			sb.append("<tr><td>"
+					+ book.getBook().getBookId()
+					+ "</td><td>"
+					+ book.getBook().getTitle()
+					+ "</td><td>"
+					+ book.getLibraryBranch().getBranchName()
+					+ "</td><td>"
+					+ book.getNoOfCopies()
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' data-toggle='modal' data-target='#myModal1' href='borrowBookb?bookId="
+					+ book.getNoOfCopies() + "'>Borrow Book</button></td></tr>");
+
+		sb.append("<table>");
+		model.addAttribute("result", sb.toString());
+		return "result";
+	}
+
+	@RequestMapping(value = "/searchBookCopies", method = RequestMethod.GET)
+	public String searchBookCopies(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		String searchString = webRequest.getParameter("searchString");
+		int count = adminService.searchBooksCount(searchString);
+		String s = adminService.pagination("/training/getBookCopies",
+				searchString, count, 10);
+
+		model.addAttribute("pagination", s);
+		model.addAttribute("searchResult", searchString);
+		return "viewBookCopies";
 
 	}
 
@@ -946,9 +1112,9 @@ public class HomeController {
 		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
 		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
 		String searchString = webRequest.getParameter("genreId");
-if(searchString.isEmpty()){
-	searchString = new String();
-}
+		if (searchString.isEmpty()) {
+			searchString = new String();
+		}
 		books = (List<Book>) adminService.getAllGenreBooks(pageNo, pageSize,
 				searchString);
 
@@ -961,8 +1127,8 @@ if(searchString.isEmpty()){
 					+ book.getTitle()
 					+ "</td><td>"
 					+ book.getPublisher().getPublisherName()
-					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' data-toggle='modal' data-target='#myModal1' href='borrowBookb?bookId="
-					+ book.getBookId() + "'>Borrow Book</button></td></tr>");
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' onclick=\"javascript:location.href='borrowBookB?bookId="
+					+ book.getBookId() + "';\">Select Book</button></td></tr>");
 
 		sb.append("<table>");
 
@@ -971,14 +1137,362 @@ if(searchString.isEmpty()){
 	}
 
 	/*
-	 * testing stuff
+	 * Books borrowing Mapping
 	 */
-	@RequestMapping(value = "/test", method = RequestMethod.GET)
-	public String test(Locale locale, Model model) throws SQLException {
+	
+	
+	
+	@RequestMapping(value = "/viewBookB", method = RequestMethod.GET)
+	public String viewBookB(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
 
-		Book book = bookDao.readOne(2);
-		model.addAttribute("book", book.getTitle());
-		return "test";
+		int count = adminService.getAllBooksCount();
+		String s = adminService.pagination("/training/getBookB", new String(),
+				count, 10);
+
+		model.addAttribute("pagination", s);
+
+		return "viewBookB";
+
 	}
+
+	@RequestMapping(value = "/getBookB", method = RequestMethod.GET)
+	public String getBookBData(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		List<Book> books;
+
+		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
+		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
+		String searchString = webRequest.getParameter("searchString");
+
+		books = (List<Book>) adminService.getAllBooks(pageNo, pageSize,
+				searchString);
+
+		StringBuffer sb = new StringBuffer(
+				"<table class='table' id='booksTable'><thead><tr><th>#</th><th>Book Title</th><th>Book Publisher</th><th>Borrow</th></tr></thead><tbody>");
+		for (Book book : books)
+			sb.append("<tr><td>"
+					+ book.getBookId()
+					+ "</td><td>"
+					+ book.getTitle()
+					+ "</td><td>"
+					+ book.getPublisher().getPublisherName()
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' onclick=\"javascript:location.href='borrowBookB?bookId="
+					+ book.getBookId() + "';\">Select Book</button></td></tr>");
+
+		sb.append("<table>");
+		model.addAttribute("result", sb.toString());
+		return "result";
+	}
+
+	@RequestMapping(value = "/searchBookB", method = RequestMethod.GET)
+	public String searchBookB(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		String searchString = webRequest.getParameter("searchString");
+		int count = adminService.searchBooksCount(searchString);
+		String s = adminService.pagination("/training/getBookB", searchString,
+				count, 10);
+
+		model.addAttribute("pagination", s);
+		model.addAttribute("searchResult", searchString);
+		return "viewBookB";
+
+	}
+
+	@RequestMapping(value = "/borrowBookB", method = RequestMethod.GET)
+	public String borrowBookB(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		int count = adminService.getAllBranchesCount();
+		String s = adminService.pagination("/training/getBorrowBookB?bookId="
+				+ webRequest.getParameter("bookId"), new String(), count, 10);
+
+		model.addAttribute("pagination", s);
+
+		return "viewBorrowBookB";
+
+	}
+
+	@RequestMapping(value = "/getBorrowBookB", method = RequestMethod.GET)
+	public String borrowBookBData(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		List<LibraryBranch> lb;
+
+		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
+		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
+		String bookId = webRequest.getParameter("bookId");
+
+		lb = (List<LibraryBranch>) adminService.searchBookBranches(bookId,
+				pageNo, pageSize);
+
+		StringBuffer sb = new StringBuffer(
+				"<table class='table' id='booksTable'><thead><tr><th>#</th><th>Branch Name</th><th>Branch Address</th><th>Edit</th><th>Delete</th></tr></thead><tbody>");
+		for (LibraryBranch lbs : lb)
+			sb.append("<tr><td>"
+					+ lbs.getBranchId()
+					+ "</td><td>"
+					+ lbs.getBranchName()
+					+ "</td><td>"
+					+ lbs.getBranchAddress()
+					+ "</td><td align='center'></td><td><button type='button' class='btn btn-sm btn-primary' onclick=\"javascript:location.href='viewReader?branchId="
+					+ lbs.getBranchId() + "&bookId=" + bookId
+					+ "';\">Select Branch</button></td></tr>");
+
+		sb.append("<table>");
+		model.addAttribute("result", sb.toString());
+		return "result";
+	}
+
+	@RequestMapping(value = "/viewReader", method = RequestMethod.GET)
+	public String viewReader(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		int count = adminService.getAllBranchesCount();
+		String s = adminService.pagination(
+				"/training/getReader?branchId="
+						+ webRequest.getParameter("branchId") + "&bookId="
+						+ webRequest.getParameter("bookId"), new String(),
+				count, 10);
+
+		model.addAttribute("pagination", s);
+
+		return "viewReader";
+
+	}
+
+	@RequestMapping(value = "/getReader", method = RequestMethod.GET)
+	public String readerData(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		List<Borrower> bor;
+
+		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
+		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
+		String bookId = webRequest.getParameter("bookId");
+		String branchId = webRequest.getParameter("branchId");
+
+		bor = (List<Borrower>) adminService.getAllBorrowers(pageNo, pageSize,
+				"");
+
+		StringBuffer sb = new StringBuffer(
+				"<table class='table' id='borrowersTable'><thead><tr><th>#</th><th>Borrower Name</th><th>Action</th></tr></thead><tbody>");
+		for (Borrower bors : bor)
+			sb.append("<tr><td>"
+					+ bors.getCardNo()
+					+ "</td><td>"
+					+ bors.getName()
+					+ "</td><td><button type='button' class='btn btn btn-primary' onclick=\"javascript:location.href='checkOut?"
+					+ "bookId=" + bookId + "&branchId=" + branchId + "&cardNo="
+					+ bors.getCardNo() + "';\">Checkout</button></td></tr>");
+
+		sb.append("<table>");
+		model.addAttribute("result", sb.toString());
+		return "result";
+	}
+
+	@RequestMapping(value = "/checkOut", method = RequestMethod.GET)
+	public String checkOut(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		String bookId = webRequest.getParameter("bookId");
+		String cardNo = webRequest.getParameter("cardNo");
+		String branchId = webRequest.getParameter("branchId");
+		if (bookId == null) {
+			System.out.println("Please Provide vilid IDs");
+		}
+
+		Book b = adminService.getBookById(Integer.parseInt(bookId));
+		Borrower bor = adminService.getBorrowerById(Integer.parseInt(cardNo));
+		LibraryBranch lb = adminService.getBranchById(Integer
+				.parseInt(branchId));
+
+		adminService.addBookLoan(b, lb, bor);
+		adminService.updateBookCopiesSub(b, lb);
+		webRequest.setAttribute("status", "the book was borrowed successfully", 0);
+		return "borrower";
+
+	}
+
+	/*
+	 * returnBook Returning a book
+	 */
+
+	@RequestMapping(value = "/viewReturnBook", method = RequestMethod.GET)
+	public String ViewReturnBook(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		int count = adminService.getAllBorroersCount();
+		String s = adminService.pagination("/training/getReturnBook",
+				new String(), count, 10);
+
+		model.addAttribute("pagination", s);
+
+		return "viewReturnBook";
+
+	}
+
+	@RequestMapping(value = "/getReturnBook", method = RequestMethod.GET)
+	public String getReturnBookData(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		List<Borrower> bor;
+
+		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
+		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
+		String searchString = webRequest.getParameter("searchString");
+
+		bor = (List<Borrower>) adminService.getAllBorrowers(pageNo, pageSize,
+				searchString);
+
+		StringBuffer sb = new StringBuffer(
+				"<table class='table' id='booksTable'><thead><tr><th>#</th><th>Name</th><th>Action</th></tr></thead><tbody>");
+		for (Borrower bors : bor)
+			sb.append("<tr><td>"
+					+ bors.getCardNo()
+					+ "</td><td>"
+					+ bors.getName()
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' onclick=\"javascript:location.href='borrowerReturn?cardNo="
+					+ bors.getCardNo()
+					+ "';\">View Borrowed Books</button></td></tr>");
+
+		sb.append("<table>");
+		model.addAttribute("result", sb.toString());
+		return "result";
+	}
+
+	@RequestMapping(value = "/borrowerReturn", method = RequestMethod.GET)
+	public String borrowerReturn(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		int count = adminService.getAllBorroersCount();
+		String s = adminService.pagination(
+				"/training/getBorrowerReturn?cardNo="
+						+ webRequest.getParameter("cardNo"), new String(),
+				count, 10);
+
+		model.addAttribute("pagination", s);
+
+		return "borrowerReturn";
+
+	}
+
+	@RequestMapping(value = "/getBorrowerReturn", method = RequestMethod.GET)
+	public String getBorrowerReturnData(Locale locale, Model model,
+			WebRequest webRequest) throws SQLException {
+
+		List<BookLoans> bl;
+
+		int cardNo = Integer.parseInt(webRequest.getParameter("cardNo"));
+
+		bl = (List<BookLoans>) adminService.readBor(cardNo);
+		if (bl.size() > 0) {
+			StringBuffer sb = new StringBuffer(
+					"<table class='table' id='booksTable'><thead><tr><th>Book Title</th><th>Borrower Name</th><th>Branch</th><th>Date Out</th><th>Date In</th><th>Due Date</th><th>Action</th></tr></thead><tbody>");
+			for (BookLoans book : bl)
+				sb.append("<tr><td>"
+						+ book.getBook().getTitle()
+						+ "</td><td>"
+						+ book.getLibraryBranch().getBranchName()
+						+ "</td><td>"
+						+ book.getBorrower().getName()
+						+ "</td><td>"
+						+ book.getDateOut()
+						+ "</td><td>"
+						+ book.getDateIn()
+						+ "</td><td>"
+						+ book.getDueDate()
+						+ "</td><td align='center'><button type='button' class='btn btn btn-primary' onclick=\"javascript:location.href='returnBB?bookId="
+						+ book.getBook().getBookId() + "&branchId="
+						+ book.getLibraryBranch().getBranchId() + "&cardNo="
+						+ book.getBorrower().getCardNo()
+						+ "';\">Return</button></td></tr>");
+
+			sb.append("<table>");
+
+			model.addAttribute("result", sb.toString());
+		} else
+			model.addAttribute("result",
+					"<h1>You have no borrwed books at the moment</h1>	");
+		return "result";
+	}
+
+	@RequestMapping(value = "/returnBB", method = RequestMethod.GET)
+	public String returnBB(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		String bookId = webRequest.getParameter("bookId");
+		String cardNo = webRequest.getParameter("cardNo");
+		String branchId = webRequest.getParameter("branchId");
+		if (bookId == null) {
+			System.out.println("Please Provide vilid IDs");
+		}
+
+		Book b = adminService.getBookById(Integer.parseInt(bookId));
+		Borrower bor = adminService.getBorrowerById(Integer.parseInt(cardNo));
+		LibraryBranch lb = adminService.getBranchById(Integer
+				.parseInt(branchId));
+
+		adminService.returnBookloan(b, bor, lb);
+		adminService.updateBookCopiesAdd(b, lb);
+		webRequest.setAttribute("status", "the book was returned successfully", 0);
+		return "borrower";
+	}
+	
+	/*
+	 * Genre Borrowing mapping
+	 */
+	
+	@RequestMapping(value = "/viewgenreB", method = RequestMethod.GET)
+	public String viewGenreB(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		int count = adminService.getAllGenreCount();
+		String s = adminService.pagination("/training/getgenreB", new String(),
+				count, 10);
+
+		model.addAttribute("pagination", s);
+
+		return "viewgenreB";
+
+	}
+
+	@RequestMapping(value = "/getgenreB", method = RequestMethod.GET)
+	public String getGenreBData(Locale locale, Model model, WebRequest webRequest)
+			throws SQLException {
+
+		List<Genre> genres;
+
+		int pageNo = Integer.parseInt(webRequest.getParameter("pageNo"));
+		int pageSize = Integer.parseInt(webRequest.getParameter("pageSize"));
+		String searchString = webRequest.getParameter("searchString");
+
+		genres = (List<Genre>) adminService.getAllGenre(pageNo, pageSize,
+				searchString);
+
+		StringBuffer sb = new StringBuffer(
+				"<table class='table' id='genresTable'><thead><tr><th>#</th><th>Genre Name</th><th>Books in this genre</th></tr></thead><tbody>");
+		for (Genre genre : genres)
+			sb.append("<tr><td>"
+					+ genre.getGenreId()
+					+ "</td><td>"
+					+ genre.getGenreName()
+					+ "</td><td align='center'><button type='button' class='btn btn btn-primary' onclick=\"javascript:location.href='viewBookG?genreId="
+					+ genre.getGenreId()
+					+ "&genreName="
+					+ genre.getGenreName()
+					+ "';\">View Books</button></td></tr>");
+
+		sb.append("<table>");
+
+		model.addAttribute("result", sb.toString());
+		return "result";
+	}
+
+
+	
+
 
 }

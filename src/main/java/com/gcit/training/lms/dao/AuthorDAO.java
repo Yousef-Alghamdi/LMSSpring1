@@ -11,11 +11,12 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 
 import com.gcit.training.lms.entity.Author;
 
-public class AuthorDAO extends AbstractDAO implements ResultSetExtractor<List<Author>>{
-	
+public class AuthorDAO extends AbstractDAO implements
+		ResultSetExtractor<List<Author>> {
+
 	@Autowired
 	JdbcTemplate template;
-	
+
 	@Autowired
 	PublisherDAO pdao;
 
@@ -25,7 +26,8 @@ public class AuthorDAO extends AbstractDAO implements ResultSetExtractor<List<Au
 	}
 
 	public void update(Author a) throws SQLException {
-		template.update("update tbl_author set authorName = ? where authorId = ?",
+		template.update(
+				"update tbl_author set authorName = ? where authorId = ?",
 				new Object[] { a.getAuthorName(), a.getAuthorId() });
 	}
 
@@ -48,20 +50,31 @@ public class AuthorDAO extends AbstractDAO implements ResultSetExtractor<List<Au
 
 	public List<Author> readAll(int pageNo, int pageSize) throws SQLException {
 		setPageNo(pageNo);
-		return (List<Author>) template.query("select * from tbl_author  LIMIT ?,?",
-				new Object[] { (pageNo-1)*pageSize, pageSize }, this);
-	}
-	
-	public Integer getCount() throws SQLException {
-		return template.queryForObject("select count(*) from tbl_author", Integer.class);
+		return (List<Author>) template.query(
+				"select * from tbl_author  LIMIT ?,?", new Object[] {
+						(pageNo - 1) * pageSize, pageSize }, this);
 	}
 
-	public List<Author> readByName(String searchString, int pageNo, int pageSize) throws SQLException {
+	public Integer getCount() throws SQLException {
+		return template.queryForObject("select count(*) from tbl_author",
+				Integer.class);
+	}
+
+	public int getSearchCount(String searchString) {
+		searchString = "%" + searchString + "%";
+		return template.queryForObject(
+				"SELECT count(*) from tbl_author where authorName Like ?",
+				new Object[] { searchString }, Integer.class);
+	}
+
+	public List<Author> readByName(String searchString, int pageNo, int pageSize)
+			throws SQLException {
 		setPageNo(pageNo);
 		String qString = "%" + searchString + "%";
 		return (List<Author>) template.query(
 				"select * from tbl_author where authorName like ?  LIMIT ?,?",
-				new Object[] {qString, (pageNo-1)*pageSize, pageSize }, this);
+				new Object[] { qString, (pageNo - 1) * pageSize, pageSize },
+				this);
 	}
 
 	@Override

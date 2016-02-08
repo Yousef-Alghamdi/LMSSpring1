@@ -10,7 +10,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
 import com.gcit.training.lms.entity.Book;
-import com.gcit.training.lms.entity.Publisher;
 
 public class BookDAO extends AbstractDAO implements
 		ResultSetExtractor<List<Book>> {
@@ -24,10 +23,6 @@ public class BookDAO extends AbstractDAO implements
 	public void create(Book b) throws SQLException {
 		template.update(
 				"insert into tbl_book (title, pubId) values (?, ?)",
-				new Object[] { b.getTitle(), b.getPublisher().getPublisherId() });
-
-		template.update(
-				"insert into tbl_book (title, pubId) values (?,?)",
 				new Object[] { b.getTitle(), b.getPublisher().getPublisherId() });
 	}
 
@@ -64,6 +59,14 @@ public class BookDAO extends AbstractDAO implements
 				Integer.class);
 	}
 
+	public int getSearchCount(String searchString) {
+		searchString = "%" + searchString + "%";
+		return template.queryForObject(
+				"SELECT count(*) from tbl_book where title Like ?",
+				new Object[] { searchString }, Integer.class);
+
+	}
+
 	public List<Book> readByName(String searchString, int pageNo, int pageSize)
 			throws SQLException {
 		setPageNo(pageNo);
@@ -89,8 +92,7 @@ public class BookDAO extends AbstractDAO implements
 			Book b = new Book();
 			b.setBookId(rs.getInt(1));
 			b.setTitle(rs.getString(2));
-			Publisher p = pdao.readOne((Integer.parseInt(rs.getString(3))));
-			b.setPublisher(p);
+			b.setPublisher(pdao.readOne(rs.getInt(3)));
 
 			bList.add(b);
 		}

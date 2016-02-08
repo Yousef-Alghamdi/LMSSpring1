@@ -54,6 +54,13 @@ public class GenreDAO extends AbstractDAO implements
 	public Integer getCount() throws SQLException {
 		return template.queryForObject("select count(*) from tbl_genre", Integer.class);
 	}
+	
+	public int getSearchCount(String searchString) {
+		searchString = "%" + searchString + "%";
+		return template.queryForObject(
+				"SELECT count(*) from tbl_genre where genre_name Like ?",
+				new Object[] { searchString }, Integer.class);
+	}
 
 	public List<Genre> readByName(String searchString, int pageNo, int pageSize) throws SQLException {
 		String qString = "%" + searchString + "%";

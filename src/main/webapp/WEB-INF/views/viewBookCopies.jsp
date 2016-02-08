@@ -8,11 +8,24 @@
 <%@ page import="java.util.List"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
+
+<div class="alert alert-danger" role="alert" id="#ErrorEdit" style="display:none;">
+  <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+  <span class="sr-only">Error:</span>
+  Updating Failed
+</div>
+<div class="alert alert-success" role="alert" id="#SuccessEdit" style="display:none;">
+  <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+  <span class="sr-only">Error:</span>
+  Author Successfully Updated.
+</div>
+
+
 <div class="page-header">
-	<h1>List of Books in LMS Application</h1>
+	<h1>List of Books in in ${genreName }LMS Application</h1>
 	
 </div>
-<form action="searchBook" method="get">
+<form action="searchBookCopies" method="get">
 <div class="input-group">
   <span class="input-group-addon" id="basic-addon1">Search</span>
   <input type="text" class="form-control" value='${searchResult}' placeholder="Book Name" aria-describedby="basic-addon1" name="searchString" >

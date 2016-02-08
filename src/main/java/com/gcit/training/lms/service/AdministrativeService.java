@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.gcit.training.lms.dao.AuthorDAO;
+import com.gcit.training.lms.dao.BookCopiesDAO;
 import com.gcit.training.lms.dao.BookDAO;
 import com.gcit.training.lms.dao.BookLoansDAO;
 import com.gcit.training.lms.dao.BorrowerDAO;
@@ -17,6 +18,8 @@ import com.gcit.training.lms.dao.LibraryBranchDAO;
 import com.gcit.training.lms.dao.PublisherDAO;
 import com.gcit.training.lms.entity.Author;
 import com.gcit.training.lms.entity.Book;
+import com.gcit.training.lms.entity.BookCopies;
+import com.gcit.training.lms.entity.BookLoans;
 import com.gcit.training.lms.entity.Borrower;
 import com.gcit.training.lms.entity.Genre;
 import com.gcit.training.lms.entity.LibraryBranch;
@@ -35,6 +38,9 @@ public class AdministrativeService {
 
 	@Autowired
 	BookLoansDAO bldao;
+
+	@Autowired
+	BookCopiesDAO bcdao;
 
 	@Autowired
 	BorrowerDAO bordao;
@@ -69,7 +75,7 @@ public class AdministrativeService {
 	}
 
 	public int getBooksCountByTitle(String searchString) throws SQLException {
-		return bdao.getCount();
+		return bdao.getSearchCount(searchString);
 	}
 
 	@Transactional
@@ -96,7 +102,7 @@ public class AdministrativeService {
 	}
 
 	public int searchBooksCount(String searchString) throws SQLException {
-		return bdao.getCount();
+		return bdao.getSearchCount(searchString);
 	}
 
 	public Book getBookById(int bookId) throws SQLException {
@@ -158,7 +164,7 @@ public class AdministrativeService {
 	}
 
 	public int searchAuthorsCount(String searchString) throws SQLException {
-		return adao.getCount();
+		return adao.getSearchCount(searchString);
 	}
 
 	public String pagination(String url, String searchString, int count,
@@ -171,8 +177,8 @@ public class AdministrativeService {
 		if (count % pageSize != 0)
 			totalPage++;
 		sb.append("<nav><ul class='pagination'>");
-		if(!url.contains("?"))
-		url = url + "?";
+		if (!url.contains("?"))
+			url = url + "?";
 
 		if (StringUtils.hasLength(searchString))
 			url = url + "&searchString=" + searchString + "&";
@@ -213,10 +219,6 @@ public class AdministrativeService {
 			return lbdao.readAll(pageNo, pageSize);
 	}
 
-	public int getBranchesCountByTitle(String searchString) throws SQLException {
-		return lbdao.getCount();
-	}
-
 	@Transactional
 	public String deleteBranch(Integer branchId) throws SQLException {
 		LibraryBranch lb = new LibraryBranch();
@@ -242,7 +244,7 @@ public class AdministrativeService {
 	}
 
 	public int searchBranchesCount(String searchString) throws SQLException {
-		return lbdao.getCount();
+		return lbdao.getSearchCount(searchString);
 	}
 
 	public LibraryBranch getBranchById(int branchId) throws SQLException {
@@ -276,8 +278,7 @@ public class AdministrativeService {
 	}
 
 	public int getAllBorroersCount() throws SQLException {
-
-		return adao.getCount();
+		return bordao.getCount();
 
 	}
 
@@ -295,6 +296,7 @@ public class AdministrativeService {
 	public void updateBorrower(Integer borId, String borName,
 			String borAddress, String borPhone) throws SQLException {
 		Borrower bor = new Borrower();
+		bor.setCardNo(borId);
 		bor.setName(borName);
 		bor.setAddress(borAddress);
 		bor.setPhone(borPhone);
@@ -308,11 +310,10 @@ public class AdministrativeService {
 	}
 
 	public int searchBorrowersCount(String searchString) throws SQLException {
-		return adao.getCount();
+		return bordao.getSearchCount(searchString);
 	}
 
 	public Borrower getBorrowerById(int borId) throws SQLException {
-		// TODO Auto-generated method stub
 		return bordao.readById(borId);
 	}
 
@@ -333,7 +334,7 @@ public class AdministrativeService {
 	}
 
 	public int searchGenreCount(String searchString) throws SQLException {
-		return gdao.getCount();
+		return gdao.getSearchCount(searchString);
 	}
 
 	public Genre getGenreById(int genreId) throws SQLException {
@@ -366,8 +367,123 @@ public class AdministrativeService {
 		return "success";
 	}
 
-	public List<Book> getAllGenreBooks(int pageNo, int pageSize, String searchString)
-			throws SQLException {
+	public List<Book> getAllGenreBooks(int pageNo, int pageSize,
+			String searchString) throws SQLException {
 		return bdao.readAllGenre(searchString, pageNo, pageSize);
 	}
+
+	public List<BookCopies> getAllBookb(int pageNo, int pageSize,
+			String searchString) throws SQLException {
+		
+		if (searchString == null) {
+			return bcdao.readAll(pageNo, pageSize);
+		} else {
+			return bcdao.readAll(searchString, pageSize, pageNo);
+		}
+	}
+	
+
+	/*
+	 * Book transactions
+	 */
+	
+	public List<BookLoans> getAllBookL(int pageNo, int pageSize,
+			String searchString) throws SQLException {
+		if (searchString == null) {
+			return bldao.readAll(pageNo, pageSize);
+		} else {
+			return bldao.readAll(searchString, pageSize, pageNo);
+		}
+	}
+	
+	
+	public BookLoans getBookLoanByIds(int bookId, int  branchId, int  cardNo) throws SQLException {
+		return bldao.readOne(bookId, branchId, cardNo);
+		
+	}
+	public int getAllLoansCount() throws SQLException {
+		return bldao.getCount();
+	}
+
+	public void returnBookloan(Book b, Borrower bor, LibraryBranch lb) throws SQLException {
+		BookLoans bl = new BookLoans();
+		bl.setBook(b);
+		bl.setBorrower(bor);
+		bl.setLibraryBranch(lb);
+
+		bldao.returnB(bl);
+	}
+	
+	public List<LibraryBranch> searchBookBranches(String searchString,
+			Integer pageNo, Integer pageSize) throws SQLException {
+		return lbdao.readByBook(searchString, pageNo, pageSize);
+
+	}
+
+	public void addBookLoan(Book b, LibraryBranch lb, Borrower bor) throws SQLException {
+		BookLoans bl = new BookLoans();
+		bl.setBook(b);
+		bl.setBorrower(bor);
+		bl.setLibraryBranch(lb);
+		bldao.borrowB(bl);
+		
+	}
+
+
+
+	
+	public List<BookLoans> readBor(int cardNo) throws SQLException {
+		
+		return bldao.readByBor(cardNo);
+	}
+
+	public void updateBookCopiesSub(Book b, LibraryBranch lb) throws SQLException {
+		BookCopies nc = new BookCopies();
+		nc = bcdao.readOne(b.getBookId(), lb.getBranchId());
+		nc.setNoOfCopies(nc.getNoOfCopies() - 1);
+		nc.setBook(b);
+		nc.setLibraryBranch(lb);
+		bcdao.update(nc);
+		
+	}
+	public void updateBookCopiesAdd(Book b, LibraryBranch lb) throws SQLException {
+		BookCopies nc = new BookCopies();
+		nc = bcdao.readOne(b.getBookId(), lb.getBranchId());
+		nc.setNoOfCopies(nc.getNoOfCopies() + 1);
+		nc.setBook(b);
+		nc.setLibraryBranch(lb);
+		bcdao.update(nc);
+		
+	}
+
+	public void updateBookloan(Book b, Borrower bor, LibraryBranch lb,
+			String dIn, String dOut, String dDue) throws SQLException {
+		BookLoans bl = new BookLoans();
+		bl.setBook(b);
+		bl.setBorrower(bor);
+		bl.setLibraryBranch(lb);
+		bl.setDateOut(dOut);
+		bl.setDueDate(dDue);
+		bl.setDateIn(dIn);
+		bldao.borrowB(bl);
+		
+	}	
+	public void editBookloan(Book b, Borrower bor, LibraryBranch lb,
+			String dIn, String dOut, String dDue) throws SQLException {
+		BookLoans bl = new BookLoans();
+		bl.setBook(b);
+		bl.setBorrower(bor);
+		bl.setLibraryBranch(lb);
+		bl.setDateOut(dOut);
+		bl.setDueDate(dDue);
+		bl.setDateIn(dIn);
+		bldao.update(bl);
+		
+	}
+
+	public List<Publisher> getAllPublishers() throws SQLException {
+		return publisherDao.readAll();
+		
+	}
+	
 }
